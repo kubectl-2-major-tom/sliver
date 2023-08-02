@@ -67,7 +67,7 @@ DxkLsLOBBZZRXOrgxit+tAqinGJ6N9hOvkUlwTLfJM1tpCEFb/Z786g=\n\
 =lxj2\n\
 -----END PGP PUBLIC KEY BLOCK-----\n' > /root/sliver-pub.gpg
 
-RUN gpg import /root/sliver-pub.gpg
+RUN gpg --import /root/sliver-pub.gpg
 
 RUN for URL in $(curl -s "https://api.github.com/repos/BishopFox/sliver/releases/latest" | awk -F '"' '/browser_download_url/{print $4}' | grep '_linux' ); do curl --silent -L "$URL" --output "$(basename "$URL")"; done
 
