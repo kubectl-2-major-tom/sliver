@@ -2,7 +2,6 @@ FROM ubuntu:latest
 
 WORKDIR /root/
 SHELL ["/bin/bash", "-c"]
-
 ENV SLIVER_GPG_KEY_ID="4449039C"
 ENV SLIVER_SERVER="sliver-server_linux"
 ENV SLIVER_CLIENT="sliver-client_linux"
@@ -75,9 +74,9 @@ RUN for URL in $(curl -s "https://api.github.com/repos/BishopFox/sliver/releases
 RUN gpg --default-key "$SLIVER_GPG_KEY_ID" --verify "/root/$SLIVER_SERVER.sig" "/root/$SLIVER_SERVER" && \
     gpg --default-key "$SLIVER_GPG_KEY_ID" --verify "/root/$SLIVER_CLIENT.sig" "/root/$SLIVER_CLIENT"
 
-RUN mv "/root/$SLIVER_SERVER" /root/sliver-server && \
-    chmod 755 /root/sliver-server && \
-    /root/sliver-server unpack --force
+RUN mv "/root/$SLIVER_SERVER" /opt/sliver-server && \
+    chmod 755 /opt/sliver-server && \
+    /opt/sliver-server unpack --force
 
 RUN chmod 755 "/root/$SLIVER_CLIENT" && \
     cp -vv "/root/$SLIVER_CLIENT" /usr/local/bin/sliver-client && \
@@ -88,3 +87,5 @@ RUN chmod 755 "/root/$SLIVER_CLIENT" && \
 RUN mkdir -p /root/.sliver-client/configs && \
     /root/sliver-server operator --name root --lhost localhost --save /root/.sliver-client/configs && \
     chown -R root:root /root/.sliver-client/
+
+ENTRYPOINT [ "/opt/sliver-server" ]
