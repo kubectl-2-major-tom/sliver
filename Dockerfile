@@ -5,6 +5,7 @@ SHELL ["/bin/bash", "-c"]
 ENV SLIVER_GPG_KEY_ID="4449039C"
 ENV SLIVER_SERVER="sliver-server_linux"
 ENV SLIVER_CLIENT="sliver-client_linux"
+ENV SLIVER_ROOT_DIR="/var/run/sliver"
 
 RUN apt update &&\
     DEBIAN_FRONTEND=noninteractive apt install -yqq \
@@ -84,8 +85,8 @@ RUN chmod 755 "/root/$SLIVER_CLIENT" && \
     chmod 755 /usr/local/bin/sliver
 
 # Generating operator configs ...
-RUN mkdir -p /root/.sliver-client/configs && \
-    /opt/sliver-server operator --name root --lhost localhost --save /root/.sliver-client/configs && \
+RUN mkdir -p "${SLIVER_ROOT_DIR}/configs" && \
+    /opt/sliver-server operator --name root --lhost localhost --save "${SLIVER_ROOT_DIR}/configs" && \
     chown -R root:root /root/.sliver-client/
 
 ENTRYPOINT [ "/opt/sliver-server" ]
