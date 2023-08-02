@@ -87,6 +87,7 @@ RUN chmod 755 "/root/$SLIVER_CLIENT" && \
 # Generating operator configs ...
 RUN mkdir -p "${SLIVER_ROOT_DIR}/configs" && \
     /opt/sliver-server operator --name root --lhost localhost --save "${SLIVER_ROOT_DIR}/configs" && \
+    mkdir /root/.sliver-client && \
     chown -R root:root /root/.sliver-client/
 
 ENTRYPOINT [ "/opt/sliver-server" ]
