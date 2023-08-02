@@ -1,71 +1,92 @@
-FROM golang:1.20.5
+FROM ubuntu:latest
 
-#
-# IMPORTANT: This Dockerfile is used for testing, I do not recommend deploying
-#            Sliver using this container configuration! However, if you do want
-#            a Docker deployment this is probably a good place to start.
-#
+WORKDIR /root/
 
-ENV PROTOC_VER 21.12
-ENV PROTOC_GEN_GO_VER v1.27.1
-ENV GRPC_GO v1.2.0
+ENV SLIVER_GPG_KEY_ID="4449039C"
+ENV SLIVER_SERVER="sliver-server_linux"
+ENV SLIVER_CLIENT="sliver-client_linux"
 
-# Base packages
-RUN apt-get update --fix-missing && apt-get -y install \
-    git build-essential zlib1g zlib1g-dev \
-    libxml2 libxml2-dev libxslt-dev locate curl \
-    libreadline6-dev libcurl4-openssl-dev git-core \
-    libssl-dev libyaml-dev openssl autoconf libtool \
-    ncurses-dev bison curl wget xsel postgresql \
-    postgresql-contrib postgresql-client libpq-dev \
-    libapr1 libaprutil1 libsvn1 \
-    libpcap-dev libsqlite3-dev libgmp3-dev \
-    zip unzip mingw-w64 binutils-mingw-w64 g++-mingw-w64 \
-    nasm gcc-multilib
+RUN apt update &&\
+    DEBIAN_FRONTEND=noninteractive apt install -yqq \
+        gpg \
+        curl \
+        build-essential \
+        git \
+        mingw-w64 \
+        binutils-mingw-w64 \
+        g++-mingw-w64
 
-#
-# > User
-#
-RUN groupadd -g 999 sliver && useradd -r -u 999 -g sliver sliver
-RUN mkdir -p /home/sliver/ && chown -R sliver:sliver /home/sliver
+RUN gpg --import  <<EOF
+-----BEGIN PGP PUBLIC KEY BLOCK-----
 
-#
-# > Metasploit
-#
-RUN curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall \
-    && chmod 755 msfinstall \
-    && ./msfinstall
-RUN mkdir -p ~/.msf4/ && touch ~/.msf4/initial_setup_complete \
-    &&  su -l sliver -c 'mkdir -p ~/.msf4/ && touch ~/.msf4/initial_setup_complete'
+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
+=lxj2
+-----END PGP PUBLIC KEY BLOCK-----
+EOF
 
-#
-# > Sliver
-#
 
-# Protoc
-# WORKDIR /tmp
-# RUN wget -O protoc-${PROTOC_VER}-linux-x86_64.zip https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VER}/protoc-${PROTOC_VER}-linux-x86_64.zip \
-#     && unzip protoc-${PROTOC_VER}-linux-x86_64.zip \
-#     && cp -vv ./bin/protoc /usr/local/bin
-# RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VER} \
-#     && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${GRPC_GO}
+RUN for URL in $(curl -s "https://api.github.com/repos/BishopFox/sliver/releases/latest" | awk -F '"' '/browser_download_url/{print $4}' | grep '_linux' ); do curl --silent -L "$URL" --output "$(basename "$URL")"; done
 
-# Go assets
-WORKDIR /go/src/github.com/bishopfox/sliver
-ADD . /go/src/github.com/bishopfox/sliver/
-RUN make clean-all \
-    && make \
-    && cp -vv sliver-server /opt/sliver-server \
-    && /opt/sliver-server unpack --force 
+# Signature verification
+RUN gpg --default-key "$SLIVER_GPG_KEY_ID" --verify "/root/$SLIVER_SERVER.sig" "/root/$SLIVER_SERVER" && \
+    gpg --default-key "$SLIVER_GPG_KEY_ID" --verify "/root/$SLIVER_CLIENT.sig" "/root/$SLIVER_CLIENT"
 
-# Run unit tests
-RUN /go/src/github.com/bishopfox/sliver/go-tests.sh
+RUN mv "/root/$SLIVER_SERVER" /root/sliver-server && \
+    chmod 755 /root/sliver-server && \
+    /root/sliver-server unpack --force
 
-# Clean up
-RUN make clean \
-    && rm -rf /go/src/* \
-    && rm -rf /home/sliver/.sliver
+RUN chmod 755 "/root/$SLIVER_CLIENT" && \
+    cp -vv "/root/$SLIVER_CLIENT" /usr/local/bin/sliver-client && \
+    ln -sf /usr/local/bin/sliver-client /usr/local/bin/sliver && \
+    chmod 755 /usr/local/bin/sliver
 
-USER sliver
-WORKDIR /home/sliver/
-ENTRYPOINT [ "/opt/sliver-server" ]
+# Generating operator configs ...
+RUN mkdir -p /root/.sliver-client/configs && \
+    /root/sliver-server operator --name root --lhost localhost --save /root/.sliver-client/configs && \
+    chown -R root:root /root/.sliver-client/
