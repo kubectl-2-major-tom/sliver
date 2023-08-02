@@ -1,6 +1,7 @@
 FROM ubuntu:latest
 
 WORKDIR /root/
+SHELL ["/bin/bash", "-c"]
 
 ENV SLIVER_GPG_KEY_ID="4449039C"
 ENV SLIVER_SERVER="sliver-server_linux"
@@ -16,7 +17,8 @@ RUN apt update &&\
         binutils-mingw-w64 \
         g++-mingw-w64
 
-RUN echo $'-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n\
+RUN echo $'-----BEGIN PGP PUBLIC KEY BLOCK-----\n\
+\n\
 mQINBGBlvl8BEACpoAriv9d1vf9FioSKCrretCZg4RnpjEVNDyy6Y4eFp5dyR9KK\n\
 VJbm8gP4ymgqoTrjwqRp/tSiTB6h/inKnxlgy7It0gsRNRpZCGslPRVIQQBStiTv\n\
 sxQ4qIxebvku/4/dqoSmJzhNg9MzClR8HTO7Iv74jP7gGMD+gebvXwapstBkua66\n\
@@ -65,9 +67,7 @@ p5qUN2kQxNXLtWKVE8j9uGzY0DqO583orjATWj52Kz7SM4uio1ZBVLcJht6YPdBH\n\
 5UofpRVFFWGP9QQAuIacdTioF05sBcw15WC9ULxi2lV8vBsVjT9zIS4zxfRE8u/G\n\
 DxkLsLOBBZZRXOrgxit+tAqinGJ6N9hOvkUlwTLfJM1tpCEFb/Z786g=\n\
 =lxj2\n\
------END PGP PUBLIC KEY BLOCK-----\n' > /root/sliver-pub.gpg
-
-RUN gpg --import /root/sliver-pub.gpg
+-----END PGP PUBLIC KEY BLOCK-----' | gpg --import
 
 RUN for URL in $(curl -s "https://api.github.com/repos/BishopFox/sliver/releases/latest" | awk -F '"' '/browser_download_url/{print $4}' | grep '_linux' ); do curl --silent -L "$URL" --output "$(basename "$URL")"; done
 
